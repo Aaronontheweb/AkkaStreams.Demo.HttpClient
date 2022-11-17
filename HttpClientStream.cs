@@ -3,6 +3,7 @@ using Akka;
 using Akka.Actor;
 using Akka.Streams;
 using Akka.Streams.Dsl;
+using static AkkaStreamsHttp.RepeatLastFlow;
 
 namespace AkkaStreamsHttp;
 
@@ -21,7 +22,8 @@ public static class HttpClientStream
     private static Source<HttpClient, ICancelable> CreateSourceInternal(string clientId, Func<Task<string>> tokenProvider, TimeSpan tokenRefreshTimeout)
     {
         var source = Source.Tick(TimeSpan.Zero, TimeSpan.FromSeconds(30), clientId)
-            .SelectAsync(1, async c => CreateClient(c, (await tokenProvider().WaitAsync(tokenRefreshTimeout))));
+            .SelectAsync(1, async c => CreateClient(c, (await tokenProvider().WaitAsync(tokenRefreshTimeout))))
+            .RepeatLast();
         return source;
     }
     
