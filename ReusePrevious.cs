@@ -50,5 +50,17 @@ public sealed class RepeatLast<T> : GraphStage<FlowShape<T, T>>
                     Push(stage._out, _last);
             });
         }
+
+        public override void PostStop()
+        {
+            DisposeIfNecessary();
+            base.PostStop();
+        }
+
+        private void DisposeIfNecessary()
+        {
+            if (_last is IDisposable disposable)
+                disposable.Dispose();
+        }
     }
 }
