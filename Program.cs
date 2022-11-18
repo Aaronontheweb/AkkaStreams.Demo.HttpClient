@@ -23,6 +23,14 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-app.MapGet("/", context => context.Response.WriteAsync("Hello World! [RequestId: " + (context.Request.Headers.TryGetValue("RequestId", out var requestId) ? requestId.First() : "unknown") + "]"));
+app.MapGet("/", context =>
+{
+    // extract the X-Client-ID header from the request if it exists
+    var clientId = context.Request.Headers["X-Client-ID"].FirstOrDefault() ?? "unknown";
+    return context.Response.WriteAsync("Hello World! [ClientId: "+ clientId +"][RequestId: " +
+                                       (context.Request.Headers.TryGetValue("RequestId", out var requestId)
+                                           ? requestId.First()
+                                           : "unknown") + "]");
+});
 
 app.Run();

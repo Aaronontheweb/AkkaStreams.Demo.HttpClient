@@ -35,6 +35,12 @@ public sealed class RequestorActor : ReceiveActor, IWithTimers
             _log.Info("Response: {0}", await requestCompleted.ResponseMessage.Content.ReadAsStringAsync());
         });
         
+        // handle RequestFailed
+        Receive<RequestFailed>(requestFailed =>
+        {
+            _log.Info("Request failed");
+        });
+        
         Timers!.StartPeriodicTimer("request", Request.Instance, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(0.25));
     }
 

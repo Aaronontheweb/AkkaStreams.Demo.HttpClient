@@ -41,6 +41,10 @@ public sealed class RequestCompleted
     public HttpResponseMessage ResponseMessage { get; }
 }
 
+public sealed class RequestFailed
+{
+    // TODO: we didn't receive an HTTP response here
+}
 
 public readonly struct RequestsWithDeadline
 {
@@ -64,7 +68,7 @@ public static class HttpRequestMessageExtensions
     public static RequestsWithDeadline WithDeadline(this HttpRequestMessage request, TimeSpan timeout) => new RequestsWithDeadline(request, new Deadline(timeout));
     
     // method that returns an Akka.Streams graph that will automatically retry a request if it times out
-    public static Source<(HttpRequestMessage req, IActorRef requestor), TMat> RetriableRequestPipeline<TMat>(this Source<(HttpRequestMessage req, IActorRef requestor), TMat> source, TimeSpan timeout, int maxRetries)
+    public static Source<(HttpRequestMessage req, IActorRef requestor), TMat> RetriableRequestPipeline<TMat>(this Source<(HttpRequestMessage req, IActorRef requestor), TMat> source, TimeSpan timeout)
     {
         var src = source
             .Select(request => (request.req.WithDeadline(timeout), request.requestor))
