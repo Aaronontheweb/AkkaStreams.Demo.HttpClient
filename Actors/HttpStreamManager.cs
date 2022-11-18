@@ -16,20 +16,25 @@ public sealed class HttpStreamManager : ReceiveActor
     {
         Receive<HttpRequestMessage>(start =>
         {
-            
+            var addDeadline = start.WithDeadline(TimeSpan.FromSeconds(30));
+            // drive the stream forward
+            _source.Tell((addDeadline, Sender));
         });
     }
 
     protected override void PreStart()
     {
-        var (actorRef, source) = Source.ActorRef<(HttpRequestMessage req, IActorRef requestor)>(1000, OverflowStrategy.Backpressure)
+        var (actorRef, source) = Source.ActorRef<(RequestsWithDeadline req, IActorRef requestor)>(1000, OverflowStrategy.DropHead)
             .RetriableRequestPipeline(TimeSpan.FromSeconds(30)) // 30 second deadline to process each HTTP request
             .PreMaterialize(Context.Materializer());
         _source = actorRef;
         
         
 
-        int PartitioningFunction(int i, (HttpRequestMessage req, IActorRef requestor) tuple) => tuple.requestor.Path.Name.GetHashCode() % i;
+        int PartitioningFunction(int i, (HttpRequestMessage req, IActorRef requestor) tuple)
+        {
+            return Math.Abs(tuple.requestor.Path.Name.GetHashCode() % i);
+        }
 
         // create hub (we'll attach HttpClients to this after it starts)
         
@@ -40,10 +45,18 @@ public sealed class HttpStreamManager : ReceiveActor
 
         var httpProcessors =
             ClientIDs.Select(id => HttpClientStream.CreateSource(id, TokenProvider, TimeSpan.FromMinutes(1)))
-                .Select(c => HttpClientStream.CreateHttpProcessor(c, hubSource, TimeSpan.FromSeconds(3)))
-                .Select(s => s.RunForeach(tuple =>
-                {
-                    
-                }));
+                .Select(c => HttpClientStream.CreateHttpProcessor(c, hubSource, TimeSpan.FromSeconds(3)));
+
+        foreach (var proc in httpProcessors)
+        {
+            proc.RunForeach(tuple =>
+            {
+                var (response, requestor) = tuple;
+                if (response.HasValue)
+                    requestor.Tell(new RequestCompleted(response.Value));
+                else
+                    requestor.Tell(new RequestFailed());
+            }, Context.Materializer());
+        }
     }
 }

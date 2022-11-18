@@ -15,7 +15,7 @@ public static class HttpClientStream
     {
         var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        client.DefaultRequestHeaders.Add("X-Client-ID", clientId);
+        client.DefaultRequestHeaders.Add("ClientId", clientId);
         return client;
     }
 
@@ -58,8 +58,9 @@ public static class HttpClientStream
                 using var cts = new CancellationTokenSource(timeout);
                 return await client.SendAsync(request, cts.Token);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                var e = ex;
                 // no exactly "exponential" backoff, but good enough for this example
                 timeout += timeout;
             }

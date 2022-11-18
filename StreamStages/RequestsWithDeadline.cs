@@ -68,18 +68,19 @@ public static class HttpRequestMessageExtensions
     public static RequestsWithDeadline WithDeadline(this HttpRequestMessage request, TimeSpan timeout) => new RequestsWithDeadline(request, new Deadline(timeout));
     
     // method that returns an Akka.Streams graph that will automatically retry a request if it times out
-    public static Source<(HttpRequestMessage req, IActorRef requestor), TMat> RetriableRequestPipeline<TMat>(this Source<(HttpRequestMessage req, IActorRef requestor), TMat> source, TimeSpan timeout)
+    public static Source<(HttpRequestMessage req, IActorRef requestor), TMat> RetriableRequestPipeline<TMat>(this Source<(RequestsWithDeadline req, IActorRef requestor), TMat> source, TimeSpan timeout)
     {
         var src = source
-            .Select(request => (request.req.WithDeadline(timeout), request.requestor))
-            .Buffer(10 * 1024, OverflowStrategy.Backpressure)
             .AlsoTo(Flow.Create<(RequestsWithDeadline req, IActorRef requestor), TMat>()
                 .Where(c => c.req.Deadline.IsOverdue)
                 .To(Sink.ForEach<(RequestsWithDeadline req, IActorRef requestor)>(tuple =>
                 {
                     tuple.requestor.Tell(new RequestTimedOut(tuple.req.Request));
                 })))
-            .Where(c => c.Item1.Deadline.IsOverdue == false)
+            .Where(c =>
+            {
+                return c.Item1.Deadline.IsOverdue == false;
+            })
             .Select(c => (c.Item1.Request, c.requestor));
 
         return src;

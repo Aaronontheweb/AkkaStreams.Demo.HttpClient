@@ -48,6 +48,8 @@ public sealed class RepeatLast<T> : GraphStage<FlowShape<T, T>>
             {
                 if (_last != null)
                     Push(stage._out, _last);
+                else
+                    Pull(stage._in);
             });
         }
 

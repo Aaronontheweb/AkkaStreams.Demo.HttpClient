@@ -18,7 +18,7 @@ public sealed class RequestorActor : ReceiveActor, IWithTimers
     {
         Receive<Request>(request =>
         {
-            var httpRequest = new HttpRequestMessage(HttpMethod.Get, "https://localhost:5000");
+            var httpRequest = new HttpRequestMessage(HttpMethod.Get, "http://localhost:5000");
             httpRequest.Headers.Add("RequestId", Guid.NewGuid().ToString());
             httpActor.Tell(httpRequest);
         });
