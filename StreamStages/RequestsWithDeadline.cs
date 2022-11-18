@@ -31,6 +31,16 @@ public sealed class RequestTimedOut
     public HttpRequestMessage Request { get; }
 }
 
+public sealed class RequestCompleted
+{
+    public RequestCompleted(HttpResponseMessage responseMessage)
+    {
+        ResponseMessage = responseMessage;
+    }
+
+    public HttpResponseMessage ResponseMessage { get; }
+}
+
 
 public readonly struct RequestsWithDeadline
 {

@@ -39,11 +39,11 @@ public static class HttpClientStream
         return restartSource;
     }
 
-    public static Source<Option<HttpResponseMessage>, NotUsed> CreateHttpProcessor(
-        Source<HttpClient, NotUsed> httpClientSource, Source<HttpRequestMessage, NotUsed> requestSource, TimeSpan initialTimeout, int maxRetries = 3)
+    public static Source<(Option<HttpResponseMessage> response, IActorRef requestor), NotUsed> CreateHttpProcessor(
+        Source<HttpClient, NotUsed> httpClientSource, Source<(HttpRequestMessage req, IActorRef requestor), NotUsed> requestSource, TimeSpan initialTimeout, int maxRetries = 3)
     {
         var flow = httpClientSource.Zip(requestSource)
-            .SelectAsync(1, async c => await HttpHandlerFlow(c.Item1, c.Item2, initialTimeout, maxRetries));
+            .SelectAsync(1, async c => (await HttpHandlerFlow(c.Item1, c.Item2.req, initialTimeout, maxRetries), c.Item2.requestor));
         return flow;
     }
 
