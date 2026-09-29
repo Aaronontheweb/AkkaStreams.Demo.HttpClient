@@ -140,8 +140,7 @@ lines produced as results come back.
 > is actually 30 **seconds**. Everything in this table reflects what the code
 > does.
 
-## Upgrading
+## Requirements
 
-The project targets `net7.0` with `Akka.Streams 1.4.46` + `Akka.Hosting 0.5.1` —
-all three are well past their support window. See `UPGRADING.md` for a
-step-by-step path to `net8.0`/`net10.0` + the Akka.NET 1.5.x line.
+The project targets `net8.0` with `Akka.Streams 1.5.71` + `Akka.Hosting 1.5.71`.
+The SDK is pinned via `global.json`. Requires the .NET 8 SDK (or newer) to build.
