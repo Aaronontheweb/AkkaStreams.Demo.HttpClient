@@ -2,14 +2,14 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka.Hosting" Version="0.5.1" />
-    <PackageReference Include="Akka.Streams" Version="1.4.46" />
+    <PackageReference Include="Akka.Hosting" Version="1.5.71" />
+    <PackageReference Include="Akka.Streams" Version="1.5.71" />
   </ItemGroup>
 
 </Project>
