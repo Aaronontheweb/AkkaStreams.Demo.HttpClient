@@ -1,4 +1,4 @@
-﻿using Akka.Actor;
+using Akka.Actor;
 using Akka.Streams;
 using Akka.Streams.Dsl;
 using Akka.Util;
@@ -24,9 +24,10 @@ public sealed class HttpStreamManager : ReceiveActor
 
     protected override void PreStart()
     {
+        var materializer = Context.Materializer();
         var (actorRef, source) = Source.ActorRef<(RequestsWithDeadline req, IActorRef requestor)>(1000, OverflowStrategy.DropHead)
             .RetriableRequestPipeline(TimeSpan.FromSeconds(30)) // 30 second deadline to process each HTTP request
-            .PreMaterialize(Context.Materializer());
+            .PreMaterialize(materializer);
         _source = actorRef;
         
         
@@ -41,7 +42,7 @@ public sealed class HttpStreamManager : ReceiveActor
         var hub = PartitionHub.Sink<(HttpRequestMessage req, IActorRef requestor)>(PartitioningFunction, 2, 1024);
         
         // begin running top part of graph (HTTP request processing pipeline)
-        var hubSource = source.ToMaterialized(hub, Keep.Right).Run(Context.Materializer());
+        var hubSource = source.ToMaterialized(hub, Keep.Right).Run(materializer);
 
         var httpProcessors =
             ClientIDs.Select(id => HttpClientStream.CreateSource(id, TokenProvider, TimeSpan.FromMinutes(1)))
@@ -56,7 +57,7 @@ public sealed class HttpStreamManager : ReceiveActor
                     requestor.Tell(new RequestCompleted(response.Value));
                 else
                     requestor.Tell(new RequestFailed());
-            }, Context.Materializer());
+            }, materializer);
         }
     }
 }
